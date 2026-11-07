@@ -1,0 +1,48 @@
+# 超级战墙 MegaWalls —— 竞技场配置
+#
+# 所有坐标都是方块坐标，浮点部分用于精确站位。
+# 用 /warwall setup 系列命令写入，或手改本文件后 /warwall reload。
+#
+# 最小可用流程：
+#   1) /warwall setup create arena1 world
+#   2) /warwall setup select arena1
+#   3) 站到大厅处  /warwall setup lobby
+#   4) 逐队站在出生点 /warwall setup team red spawn
+#   5) 站在凋零基座 /warwall setup team red wither
+#   6) 站到地图中心 /warwall setup center
+#   7) 木斧选区后    /warwall setup wall add
+#   8) /warwall setup validate 检查，再 /warwall setup save
+
+default-arena: ""            # 留空 = 启动时不自动选；填竞技场 id 则 reload 后自动选中
+
+arenas:
+  # 下面是一个被注释掉的示例，取消注释并改坐标即可使用。
+  # 注意：四个队伍缺一不可，wither 坐标必须能站人（否则凋零会卡在方块里）。
+  example:
+    enabled: false
+    world: "world"
+    min-players: 8
+    max-players: 100
+    border-center: { x: 0.0, z: 0.0 }
+    center: { x: 0.0, y: 64.0, z: 0.0, yaw: 0.0, pitch: 0.0 }
+    lobby: { x: 0.5, y: 64.0, z: 0.5, yaw: 0.0, pitch: 0.0 }
+    spectator: { x: 0.5, y: 80.0, z: 0.5, yaw: 0.0, pitch: 0.0 }
+    teams:
+      red:
+        spawn: { x: 100.5, y: 64.0, z: 0.5, yaw: 90.0, pitch: 0.0 }
+        respawn: { x: 100.5, y: 64.0, z: 0.5, yaw: 90.0, pitch: 0.0 }
+        wither: { x: 110.5, y: 65.0, z: 0.5, yaw: 0.0, pitch: 0.0 }
+      yellow:
+        spawn: { x: -100.5, y: 64.0, z: 0.5, yaw: 270.0, pitch: 0.0 }
+        wither: { x: -110.5, y: 65.0, z: 0.5, yaw: 0.0, pitch: 0.0 }
+      green:
+        spawn: { x: 0.5, y: 64.0, z: -100.5, yaw: 0.0, pitch: 0.0 }
+        wither: { x: 0.5, y: 65.0, z: -110.5, yaw: 0.0, pitch: 0.0 }
+      blue:
+        spawn: { x: 0.5, y: 64.0, z: 100.5, yaw: 180.0, pitch: 0.0 }
+        wither: { x: 0.5, y: 65.0, z: 110.5, yaw: 0.0, pitch: 0.0 }
+    walls: []                # WALL_DROP 时整段移除；每项 { min:{x,y,z}, max:{x,y,z} }
+    unbreakable: []          # 任何阶段都不许破坏（凋零房 / 核心建筑）
+    mining-zones: []         # 空 = 全图可挖；非空 = 只有这些盒内可挖
+    no-build-zones: []       # 禁止放置方块
+    diamond-drops: []        # 中央定时刷新，如 { x: 0.5, y: 65.0, z: 0.5, every-seconds: 300, amount: 2, item: DIAMOND }

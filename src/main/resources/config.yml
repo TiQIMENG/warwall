@@ -1,0 +1,180 @@
+# 超级战墙 MegaWalls —— 主配置
+# 改完用 /warwall reload 生效；阶段时长与伤害系数属于「局开始时快照」，重载后下一局才生效。
+
+debug: false                       # true = 打印阶段转移、伤害与配置告警日志，排查问题时再开
+language: zh_CN                    # 预留字段，当前只有简体中文
+prefix: "&8[&c战墙&8] &r"          # 聊天前缀，& 是颜色码
+
+# ===== 阶段时长（秒）=====
+# 默认值按「超级战墙」的经典节奏：5 分钟准备期 + 10 分钟战斗，之后接数据包的两次缩圈与死斗压迫。
+# 想要 ShiinaYumeka/wallwar 数据包的原始长度，用 wallwar 预设：
+#   prep 2400 / battle 1200 / shrink-1 600 / shrink-2 600 / final-fight 180（约 90 分钟一局）
+phases:
+  countdown-seconds: 30            # 1..600，满人后的开赛倒计时
+  prep-seconds: 300                # 60..7200，资源收集期（天空之壁站立、凋零无敌、急迫 II）
+  battle-seconds: 600              # 120..7200，战斗期（墙倒、凋零可打、死亡掉落）
+  shrink-1-seconds: 300            # 60..3600，第一次缩圈
+  shrink-2-seconds: 300            # 60..3600，第二次缩圈
+  final-fight-seconds: 180         # 60..1200，死斗（之后进入压迫阶段时间轴）
+  ended-seconds: 20                # 5..120，结算展示
+  warn-at-seconds: [300, 180, 120, 60, 30, 10]   # 准备期剩余这些秒数时播报
+
+# ===== 玩家 =====
+players:
+  max-health: 20.0                 # 2.0..40.0，UHC 原味 20；想要 MegaWalls 长血条改 40（TTK 翻倍）
+  heal-on-kill: 2.0                # 0..20，击杀者回血（20 HP 尺度下 2.0 = 1 心）
+  respawn-delay-seconds: 5         # 0..30，战斗期死亡后的复活等待
+  respawn-invulnerable-seconds: 3  # 0..15，复活后的无敌时间
+  keep-inventory-in-prep: true     # 准备期死亡不掉落（战斗期仍然掉落）
+  drop-head-on-death: true         # 战斗期被玩家击杀时额外掉 1 个玩家头颅
+  drop-golden-apple-on-death: true # 战斗期被玩家击杀时额外掉 1 个金苹果
+  spectator-after-wither-death: true  # 己方凋零被摧毁后，死亡即转旁观
+  clear-kit-on-spectate: true      # 转旁观时清空背包
+
+# ===== 战斗 =====
+combat:
+  natural-regeneration: false      # false = 关闭世界自然回血，走 UHC 规则
+  friendly-fire: false             # false = 同队互相打不掉血
+  melee-damage-multiplier: 1.0     # 0.1..5.0，近战伤害系数
+  projectile-damage-multiplier: 1.0
+  true-damage-multiplier: 1.0      # 职业技能真伤的全局系数
+  attack-knockback: 0.0            # 0..4，写 Attribute.ATTACK_KNOCKBACK；0 = 原版，1.0 等于常驻击退 I
+  max-no-damage-ticks: 20          # 1..40，越小连击越快（10 会明显放大真伤职业收益）
+  reset-cooldown-on-swap: true     # 切手/换栏时重置攻击冷却，防止绕过 1.9 冷却连点
+  assist-window-seconds: 10        # 1..30，最后一次造成伤害后多久内死亡算助攻
+  assist-min-damage: 6.0           # 累计造成这么多伤害才算助攻
+  gapple-cooldown-seconds: 20      # 0..300，金苹果冷却（现代金苹果价值约 8 点血，必须限频）
+  potion-blacklist: [POISON, WITHER, SLOWNESS, WEAKNESS, LEVITATION, HARM]  # 玩家喝下即取消并提示
+  # MACE 配 Density 可高空一击秒人；WIND_CHARGE 会把团战打散；1.21.11 新增，默认拉黑。
+  item-blacklist: [END_CRYSTAL, RESPAWN_ANCHOR, TOTEM_OF_UNDYING, ELYTRA, ENDER_CHEST, SHULKER_BOX, ENCHANTED_GOLDEN_APPLE, MACE, WIND_CHARGE]
+
+# ===== 凋零 =====
+wither:
+  max-health: 400.0                # 100..4000；1.21.11 剑只有 1.6 击/秒，400 ≈ 旧版 1000 的实际耗时
+  invulnerable-seconds: 5          # 0..120，生成后的无敌时间（准备期恒无敌）
+  enrage-health-percent: 50        # 1..100，血量低于该百分比进入狂暴
+  skull-interval-seconds: 4        # 1..30，普通状态发射凋零骷髅的间隔
+  enrage-skull-interval-seconds: 2 # 1..30，狂暴后的间隔
+  skill-interval-seconds: 7        # 1..60，狂暴后技能间隔
+  skill-radius: 20.0               # 4..40，技能判定半径
+  aggro-radius: 40.0               # 8..80，敌人在这个范围内凋零才会出手
+  damage-to-wither-multiplier: 1.0 # 0.1..5.0，玩家对凋零的伤害系数
+
+# ===== 核心 Nexus（融合「核心战争」玩法，见 docs/DESIGN-FUSION.md）=====
+# 核心与凋零是两个独立目标：凋零决定「还能不能复活」，核心决定「在哪复活 + 团队增益」。
+nexus:
+  enabled: true                    # false = 关闭核心机制，退回纯战墙
+  max-health: 75                   # 1..500，每队核心血量（AnniTest 默认 75）
+  blocks-placed-damage: 1          # 敌队在核心区域每放 1 个方块扣多少血
+  blocks-broken-damage: 1          # 敌队在核心区域每破坏 1 个方块扣多少血
+  team-buff: FAST_DIGGING          # 核心存活时全队持续获得的药水效果（PotionEffectType 名）
+  team-buff-amplifier: 0           # 0 = I 级
+  team-buff-refresh-ticks: 100     # 每多少 tick 补一次增益
+  respawn-scatter-radius: 8.0      # 核心被毁后，复活点围绕残骸的随机散布半径
+  respawn-armor-loss: 1            # 核心被毁后每次复活随机掉几件护甲
+
+# ===== 边界 / 缩圈 =====
+border:
+  base-radius: 300.0               # 50..2000，开局生效的边界半径
+  damage-per-second: 0.5           # 0..20，圈外每秒基础掉血（另叠加 WorldBorder 自身伤害）
+  warning-distance: 5              # 0..50，靠近边界的红色警告距离
+  shrink-steps:                    # 相对「战斗阶段开始」的时间点收缩
+    - at-battle-seconds: 300
+      radius: 180.0
+      duration-seconds: 90
+    - at-battle-seconds: 480
+      radius: 105.0
+      duration-seconds: 60
+  deathmatch:
+    radius: 60.0                   # 0..1000，死斗终点半径
+    duration-seconds: 60           # 收到该半径所用的秒数
+    damage-per-second: 4.0         # 死斗期圈外每秒掉血
+
+# ===== 职业与发育 =====
+# 只有一条发育曲线，没有模式开关：
+#   职业提供「身份标识 + 少量标志性起步物」，铁/钻石装备、附魔、药水全部靠自己挖、烧、炼。
+# 这样既有 UHC 的发育曲线，又保留战墙的职业分工。
+kits:
+  starter-items: [WOODEN_PICKAXE, WOODEN_AXE, STONE_SWORD]
+  starter-food: 8                  # 熟牛排数量
+  starter-torches: 8               # 火把数量
+
+# ===== 随机地图生成 =====
+# 开：每局现生成一张全新的四队对称图（地形起伏、矿区、墙门位、中央结构、装饰材料都随机）
+# 关：改用 arenas.yml 里手工配置的固定地图
+mapgen:
+  enabled: true
+  world: "warwall_maps"            # 专用世界名；不存在时用 NaturalTerrainGenerator 自动创建
+  center-x: 0                      # 生成区中心
+  center-y: 100                    # 地面基准 Y
+  center-z: 0
+  min-radius: 56                   # 56..96，整张图的半径范围（每局随机取）
+  max-radius: 72
+  min-players: 2
+  max-players: 100
+  max-attempts: 4                  # 连通性不合格时换种子重试的次数
+  min-land-ratio: 0.18             # 出生点可达区域占全图的最低比例（低于就重生成）
+  fairness-pass: true              # 生成后跑一遍照搬自 warwalltool 的领地评分与补偿
+
+# ===== 地图池 =====
+# arenas.yml 里配了多张图时，每局随机抽一张（会避开上一局用过的图）。
+# 关掉就固定用 /warwall setup select 选中的那张。
+arenas:
+  rotation: true
+
+# ===== 队友发光 =====
+# 让同队玩家隔着方块也能看到对方的发光轮廓。
+# 实现需要按观看者下发实体元数据包（Paper 没有对应 API），初始化自检失败会自动禁用。
+glow:
+  team-glow: true
+
+# ===== 死斗 Boss =====
+# 死斗的「伊甸之果」阶段在场地中央出现，逼玩家在抢果与打 Boss 之间做选择。
+boss:
+  health: 200.0                    # 20..2000
+  damage: 8.0                      # 1..40
+  kill-coins: 120                  # 击杀奖励金币
+  eden-drops: 2                    # 击杀后掉几个伊甸之果
+
+# ===== 墙 =====
+wall:
+  max-volume: 200000               # 单块墙允许的最大方块数，超了拒绝捕获
+  restore-per-tick: 2000           # 1..20000，局末还原墙时每 tick 处理的方块数
+  drop-sound: BLOCK_STONE_BREAK    # 墙倒时播放的音效名（原版 Sound 常量）
+
+# ===== UI =====
+ui:
+  sidebar: true                    # 侧边栏
+  actionbar-energy: true           # 动作条显示职业能量
+  titles: true                     # 阶段切换时的大标题
+  sidebar-update-ticks: 20         # 侧边栏刷新间隔，别低于 10
+
+# ===== 视觉（纯原版，不做资源包）=====
+visual:
+  use-custom-model-data: false     # 预留开关：日后接材质包时置 true 并填素材，逻辑代码不用改
+  custom-model-data-base: 1000     # 开启后 CMD = base + 职业序号
+  hide-attributes: true            # 自定义物品隐藏属性提示行
+  item-glint-on-ability-ready: true # 能量满时给技能物品加附光效
+  team-colored-names: true         # 自定义物品显示名按队伍色着色
+
+# ===== 统计 =====
+stats:
+  enabled: true                    # 记录击杀/死亡/伤害/助攻并写盘
+  keep-match-records: 200          # 0..5000，战报文件超量后删最旧的
+  announce-mvp: true               # 结算时播报 MVP
+
+# ===== 文案 =====
+messages:
+  no-permission: "&c你没有执行该命令的权限。"
+  not-in-game: "&c本局尚未开始。"
+  already-running: "&c已有一局正在进行。"
+  phase.prep: "&e资源收集阶段——挖掘、合成、加固你的基地。"
+  phase.wall-drop: "&c天空之壁已经倒塌！"
+  phase.battle: "&6战斗阶段——摧毁敌方凋零。"
+  phase.deathmatch: "&4死斗阶段——凋零全部死亡，没有退路。"
+  wither-destroyed: "&c%team% 的凋零已被摧毁。"
+  border-shrinking: "&e世界边界将在 %time% 秒内缩小至 %radius% 格。"
+  border-outside: "&c你已在安全区外，正在持续掉血。"
+  respawn-in: "&7你将在 %seconds% 秒后复活。"
+  eliminated: "&c你的队伍已被淘汰，转为旁观。"
+  ability-ready: "&a技能已就绪，右键技能物品释放。"

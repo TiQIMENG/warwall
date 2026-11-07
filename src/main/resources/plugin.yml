@@ -1,0 +1,23 @@
+name: warwall
+version: ${version}
+main: cn.infinite.warwall.WarwallPlugin
+api-version: "1.21.11"
+author: infinite
+description: 超级战墙 MegaWalls —— 四队凋零、预备期挖矿、墙倒混战与缩圈死斗的 Paper 团队竞技插件。
+
+commands:
+  warwall:
+    description: 超级战墙主命令
+    usage: /warwall help
+    aliases: [mw, megawall]
+
+permissions:
+  warwall.play:
+    description: 允许报名、选职业、查看对局信息
+    default: true
+  warwall.setup:
+    description: 允许使用 /warwall setup 选区与保存竞技场
+    default: op
+  warwall.admin:
+    description: 允许开赛、停赛、调试与重载
+    default: op
